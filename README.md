@@ -2,143 +2,234 @@
 
 A complete **nanos world technical showcase** designed around a WWII Military RP / frontline gameplay loop.
 
-The project focuses on systems and code quality rather than custom map assets. It demonstrates a modular server-authoritative architecture with factions, soldier classes, sequential objectives, tickets, respawns, configurable weapons, scoring, networking and a client HUD.
+The project focuses on gameplay systems, code quality and maintainability rather than custom map assets. It demonstrates a modular, server-authoritative architecture with factions, soldier classes, sequential objectives, tickets, respawns, configurable loadouts, scoring, networking and a client HUD.
 
-> **Project status:** recruitment/portfolio prototype. Core API usage has been reviewed against nanos world a1.156 documentation. A real multiplayer runtime pass is still required before this can honestly be called production-ready.
+> **Project status:** technical portfolio prototype built around the nanos world API and designed for further integration, balancing and multiplayer validation within a production project.
 
 ## Portfolio objective
 
-This repository demonstrates how **Aven** would structure the gameplay foundation of a serious Military RP: clear ownership of state, modular services, validated networking and configuration-driven systems. It is intentionally designed so a real project's maps and licensed WWII assets can be integrated without rewriting the match core.
+This repository demonstrates how **Aven** would structure the gameplay foundation of a serious Military RP project: clear ownership of game state, modular services, validated networking and configuration-driven systems.
+
+The architecture is intentionally designed so that a production project's maps, licensed WWII assets, weapons and additional gameplay systems can be integrated without rewriting the core match logic.
 
 ## Features
 
-- Allies vs Axis factions
-- Automatic team balancing
-- Manual faction requests with balance protection
-- Rifleman, Medic, Support and Recon classes
-- Sequential A → B → C frontline objectives
-- Server-side capture zones
-- Contested objective handling
-- Team tickets
-- Respawn waves
-- Configurable WWII-inspired loadouts
-- Server-authoritative score and match state
-- Match timer and victory conditions
-- Personal kills/deaths statistics
-- Replicated HUD state
-- Client battlefield HUD
-- Faction-scoped squads with capacity limits
-- Medic allied-heal workflow
-- Support resupply workflow / asset integration point
-- Key bindings
-- Request validation and rate limiting
-- Centralized configuration and logging
-- Documentation for architecture, security, testing and extension
+### Factions
 
-## Project structure
+- Allies vs Axis
+- Automatic team balancing
+- Manual faction selection
+- Balance protection
+- Server-authoritative faction state
+
+### Soldier classes
+
+Four configurable combat roles are included:
+
+- **Rifleman** — standard frontline infantry
+- **Medic** — allied healing and medical support
+- **Support** — ammunition and logistics support
+- **Recon** — lightweight reconnaissance role
+
+Class selection and gameplay actions are validated server-side.
+
+### Frontline objectives
+
+The match is built around sequential objectives:
+
+**A → B → C**
+
+Features include:
+
+- Server-side capture zones
+- Sequential objective progression
+- Contested objectives
+- Faction presence tracking
+- Capture progress
+- Ticket rewards
+- Score updates
+- Objective state replication
+
+### Ticket system
+
+Each faction has a configurable ticket pool.
+
+Tickets are affected by:
+
+- Player deaths
+- Objective captures
+- Match progression
+
+Ticket state is controlled by the server and replicated to clients.
+
+### Respawn system
+
+The project includes:
+
+- Server-controlled respawns
+- Configurable respawn delay
+- Faction spawn locations
+- Character recreation
+- Automatic loadout assignment
+
+### Squads
+
+Faction-scoped squads provide a foundation for organized Military RP gameplay.
+
+Available squads:
+
+- Alpha
+- Bravo
+- Charlie
+- Dog
+
+Squad membership includes:
+
+- Server-side validation
+- Configurable capacity limits
+- Faction restrictions
+- Replicated squad information
+
+The architecture can later support squad leaders, rally points, orders and command systems.
+
+### Medic system
+
+The Medic role includes a server-authoritative allied healing workflow.
+
+Validation includes:
+
+- Correct class
+- Valid target
+- Same faction
+- Maximum interaction distance
+- Target availability
+- Ability cooldown
+
+Health values are modified only by the server.
+
+### Support system
+
+The Support role includes the foundation for an ammunition resupply system.
+
+Validation includes:
+
+- Correct class
+- Allied target
+- Interaction distance
+- Target availability
+- Cooldown protection
+
+The final ammunition implementation is intentionally separated from the core gameplay because it depends on the weapon and asset system used by the production project.
+
+### Match system
+
+The match layer manages:
+
+- Match state
+- Team tickets
+- Team score
+- Match timer
+- Victory conditions
+- Player deaths
+- Objective progression
+
+This keeps match rules independent from networking, player lifecycle and individual gameplay systems.
+
+### Player statistics
+
+Match-local player statistics include:
+
+- Kills
+- Deaths
+- Faction
+- Class
+- Squad
+
+The structure can later be connected to a persistent statistics system.
+
+### HUD
+
+The client HUD displays replicated battlefield information such as:
+
+- Faction
+- Class
+- Squad
+- Tickets
+- Score
+- Active objective
+- Capture progress
+- Match information
+
+The client displays authoritative state received from the server rather than calculating important gameplay values locally.
+
+## Networking & security
+
+Competitive and RP-critical state is controlled by the server.
+
+Remote requests are treated as requests rather than trusted commands.
+
+The networking layer includes:
+
+- Server-side input validation
+- Remote event allow-listing
+- Per-player action rate limiting
+- Class validation
+- Faction validation
+- Squad validation
+- Distance validation
+- Cooldown validation
+- Authoritative health changes
+- Authoritative objective state
+- Authoritative ticket and score state
+
+Reliable networking is used for explicit gameplay actions and notices, while frequently refreshed state can use unreliable delivery when newer state supersedes older snapshots.
+
+## Architecture
+
+The project separates responsibilities into dedicated modules.
 
 ```text
-Aven-WWII-Frontline/
-├── Package.toml
-├── README.md
-├── LICENSE
-├── Shared/
-│   ├── Index.lua
-│   ├── Constants.lua
-│   └── Util.lua
-├── Server/
-│   ├── Index.lua
-│   ├── Config.lua
-│   ├── Logger.lua
-│   ├── RateLimiter.lua
-│   ├── FactionService.lua
-│   ├── ClassService.lua
-│   ├── WeaponService.lua
-│   ├── PlayerService.lua
-│   ├── ObjectiveService.lua
-│   ├── MatchService.lua
-│   └── NetworkService.lua
+aven-wwii-frontline/
 ├── Client/
+│   ├── HUD.lua
 │   ├── Index.lua
-│   ├── State.lua
-│   ├── Network.lua
 │   ├── InputController.lua
-│   └── HUD.lua
-└── docs/
-    ├── ARCHITECTURE.md
-    ├── SECURITY.md
-    ├── TESTING.md
-    ├── ROADMAP.md
-    └── SHOWCASE.md
-```
-
-## Gameplay loop
-
-1. A joining player is assigned to the least populated faction.
-2. The player selects a soldier class.
-3. The current frontline objective becomes capturable.
-4. Server-side overlap tracking counts Allies and Axis soldiers inside the zone.
-5. Numerical superiority advances capture progress; equal presence contests it.
-6. Capturing an objective awards score/tickets and unlocks the next objective.
-7. Death removes a team ticket and queues the player for a respawn.
-8. The match ends on final objective capture, score target, ticket depletion or timer resolution.
-
-## Default controls
-
-| Action | Key |
-|---|---|
-| Scoreboard | Tab |
-| Rifleman | F1 |
-| Medic | F2 |
-| Support | F3 |
-| Recon | F4 |
-| Request Allies | F5 |
-| Request Axis | F6 |
-
-## Installation
-
-Place this directory under the nanos world server `Packages/` folder and enable `aven-wwii-frontline` in the server package list.
-
-The demonstration coordinates in `Server/Config.lua` are placeholders intended to be adapted to the target map.
-
-## Security model
-
-The client never decides kills, score, tickets, objective progress or ownership. Client-originated requests are restricted to allowed actions such as class/faction requests, then validated and rate-limited server-side.
-
-## Engineering choices
-
-- configuration separated from logic;
-- services have narrow responsibilities;
-- authoritative state lives on the server;
-- network event names are centralized;
-- gameplay state sent to clients is explicitly serialized;
-- no secrets or environment-specific credentials;
-- extension points are documented.
-
-## Author
-
-**Aven** — gameplay / systems development.
-
-
-## Code review status
-
-The current revision specifically aligns its networking with nanos world's documented remote-event reliability parameter and delays gameplay spawning until the player's `Ready` lifecycle event. Canvas rendering is performed inside the Canvas `Update` event.
-
-See [`docs/REVIEW.md`](docs/REVIEW.md) for the verification gates that remain before a production claim.
-
-## Why this repository exists
-
-This is not intended to imitate a finished commercial Military RP. It is a compact technical foundation that demonstrates how I structure gameplay code, protect authoritative state, isolate configuration, and prepare systems for future expansion.
-
-— **Aven**
-
-
-## Technical documentation
-
-- [`docs/CASE-STUDY.md`](docs/CASE-STUDY.md) — design decisions and implementation response
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — boundaries and service responsibilities
-- [`docs/SECURITY.md`](docs/SECURITY.md) — trust model and remote-event rules
-- [`docs/FEATURE-MATRIX.md`](docs/FEATURE-MATRIX.md) — implemented vs planned systems
-- [`docs/TESTING.md`](docs/TESTING.md) — runtime verification matrix
-- [`docs/REVIEW.md`](docs/REVIEW.md) — API/static review scope
-- [`docs/INTERVIEW.md`](docs/INTERVIEW.md) — points for a technical discussion
+│   ├── Network.lua
+│   └── State.lua
+│
+├── Server/
+│   ├── ClassService.lua
+│   ├── Config.lua
+│   ├── FactionService.lua
+│   ├── Index.lua
+│   ├── Logger.lua
+│   ├── MatchService.lua
+│   ├── NetworkService.lua
+│   ├── ObjectiveService.lua
+│   ├── PlayerService.lua
+│   ├── RateLimiter.lua
+│   ├── RoleAbilityService.lua
+│   ├── SquadService.lua
+│   └── WeaponService.lua
+│
+├── Shared/
+│   ├── Constants.lua
+│   ├── Index.lua
+│   └── Util.lua
+│
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── CASE-STUDY.md
+│   ├── FEATURE-MATRIX.md
+│   ├── INTERVIEW.md
+│   ├── REVIEW.md
+│   ├── ROADMAP.md
+│   ├── SECURITY.md
+│   ├── SHOWCASE.md
+│   ├── STATIC-AUDIT.md
+│   └── TESTING.md
+│
+├── CONTRIBUTING.md
+├── LICENSE
+├── Package.toml
+└── README.md
