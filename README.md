@@ -233,3 +233,88 @@ aven-wwii-frontline/
 ├── LICENSE
 ├── Package.toml
 └── README.md
+## Design principles
+
+The implementation follows several core principles:
+
+### Server authority
+
+Important gameplay state is owned and modified by the server.
+
+### Separation of responsibilities
+
+Networking, factions, classes, objectives, players, squads, weapons and match rules are separated into dedicated services.
+
+### Configuration-driven gameplay
+
+Balance values, spawn locations, objectives and gameplay parameters are centralized so they can be adjusted without rewriting the core systems.
+
+### Defensive networking
+
+Client input is validated before it can affect authoritative game state.
+
+### Extensibility
+
+The architecture is designed to support additional Military RP systems without requiring a complete rewrite.
+
+## Production integration
+
+The repository intentionally does not bundle proprietary map or WWII asset packs.
+
+A production project can integrate its own:
+
+- WWII weapon models
+- Character models
+- Uniforms
+- Maps
+- Vehicles
+- Sounds
+- Animations
+- UI assets
+
+These elements can be connected to the existing gameplay services through configuration and dedicated adapters.
+
+## Planned extensions
+
+The architecture is prepared for additional systems such as:
+
+- Squad leaders
+- Rally points
+- Downed state
+- Medic revive system
+- Role limits
+- Command hierarchy
+- Radio channels
+- Command radio
+- Tactical deployment screen
+- Tactical map
+- Vehicle crews
+- Logistics
+- Deployable supplies
+- Persistent statistics
+- Administration tools
+- Moderation logs
+- Persistent player progression
+
+## Documentation
+
+Additional technical documentation is available in the `docs/` directory.
+
+- `ARCHITECTURE.md` — architecture and service responsibilities
+- `CASE-STUDY.md` — implementation and design decisions
+- `FEATURE-MATRIX.md` — implemented and planned systems
+- `SECURITY.md` — networking and trust model
+- `TESTING.md` — multiplayer validation checklist
+- `ROADMAP.md` — possible future development
+- `REVIEW.md` — technical review scope
+- `SHOWCASE.md` — portfolio presentation
+- `INTERVIEW.md` — technical discussion points
+- `STATIC-AUDIT.md` — static repository review
+
+## Author
+
+**Aven**
+
+Discord Bot Developer · Web Developer · Gameplay Systems Developer
+
+This repository is presented as a technical portfolio project demonstrating modular gameplay architecture and server-authoritative systems for nanos world.
