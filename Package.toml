@@ -1,0 +1,10 @@
+[package]
+name = "aven-wwii-frontline"
+title = "Aven — WWII Frontline"
+description = "nanos world Military RP technical showcase: factions, classes, objectives, tickets, respawns, weapons and HUD."
+author = "Aven"
+version = "1.0.0"
+
+[script]
+compatibility_version = "1.156"
+auto_cleanup = true
