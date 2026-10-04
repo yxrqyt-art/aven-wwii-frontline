@@ -1,320 +1,261 @@
 # Aven — WWII Frontline
 
-A complete **nanos world technical showcase** designed around a WWII Military RP / frontline gameplay loop.
+WWII Frontline is a multiplayer gameplay framework built for **nanos world**, with a focus on Military RP and objective-based combat.
 
-The project focuses on gameplay systems, code quality and maintainability rather than custom map assets. It demonstrates a modular, server-authoritative architecture with factions, soldier classes, sequential objectives, tickets, respawns, configurable loadouts, scoring, networking and a client HUD.
+The project provides the gameplay foundation for a two-faction frontline mode while keeping maps, models and project-specific assets independent from the core systems.
 
-> **Project status:** technical portfolio prototype built around the nanos world API and designed for further integration, balancing and multiplayer validation within a production project.
+## Overview
 
-## Portfolio objective
+The framework currently handles:
 
-This repository demonstrates how **Aven** would structure the gameplay foundation of a serious Military RP project: clear ownership of game state, modular services, validated networking and configuration-driven systems.
+- Allies and Axis factions
+- Automatic team balancing
+- Soldier classes
+- Sequential objectives
+- Capture zones
+- Team tickets and scoring
+- Respawns
+- Squads
+- Role-specific abilities
+- Player statistics
+- Client HUD
+- Server-side networking validation
 
-The architecture is intentionally designed so that a production project's maps, licensed WWII assets, weapons and additional gameplay systems can be integrated without rewriting the core match logic.
+The server remains authoritative over gameplay state. Clients send requests and receive replicated state, but do not directly control critical systems such as objectives, tickets, factions or player health.
 
-## Features
+---
+
+## Gameplay
 
 ### Factions
 
-- Allies vs Axis
-- Automatic team balancing
-- Manual faction selection
-- Balance protection
-- Server-authoritative faction state
+Players fight for either the **Allies** or the **Axis**.
 
-### Soldier classes
+Faction management handles automatic balancing as well as manual team requests. Balance checks are performed server-side before a player can change faction.
 
-Four configurable combat roles are included:
+### Classes
 
-- **Rifleman** — standard frontline infantry
-- **Medic** — allied healing and medical support
-- **Support** — ammunition and logistics support
-- **Recon** — lightweight reconnaissance role
+Four roles are currently available:
 
-Class selection and gameplay actions are validated server-side.
+| Class | Role |
+| --- | --- |
+| Rifleman | Standard frontline infantry |
+| Medic | Allied healing and medical support |
+| Support | Ammunition and logistics support |
+| Recon | Lightweight reconnaissance |
 
-### Frontline objectives
+Class selection is validated by the server and loadouts are configurable independently from the class logic.
 
-The match is built around sequential objectives:
+### Objectives
 
-**A → B → C**
+The frontline follows a sequential objective system:
 
-Features include:
+```text
+A  ->  B  ->  C
+```
 
-- Server-side capture zones
-- Sequential objective progression
-- Contested objectives
-- Faction presence tracking
-- Capture progress
-- Ticket rewards
-- Score updates
-- Objective state replication
+Only the active objective can progress.
 
-### Ticket system
+Capture zones track faction presence and handle contested states, capture progress, score updates and ticket rewards.
 
-Each faction has a configurable ticket pool.
+### Tickets
 
-Tickets are affected by:
+Each faction starts with a configurable number of tickets.
 
-- Player deaths
-- Objective captures
-- Match progression
+Tickets can be affected by:
 
-Ticket state is controlled by the server and replicated to clients.
+- player deaths;
+- objective captures;
+- match progression.
 
-### Respawn system
-
-The project includes:
-
-- Server-controlled respawns
-- Configurable respawn delay
-- Faction spawn locations
-- Character recreation
-- Automatic loadout assignment
+The match ends when a victory condition is reached.
 
 ### Squads
 
-Faction-scoped squads provide a foundation for organized Military RP gameplay.
+Players can be assigned to faction-specific squads:
 
-Available squads:
+```text
+Alpha
+Bravo
+Charlie
+Dog
+```
 
-- Alpha
-- Bravo
-- Charlie
-- Dog
+Squad membership is validated server-side and each squad can have its own capacity limit.
 
-Squad membership includes:
+The system is intentionally kept separate from faction management so squad leaders, rally points and command features can be added later without changing the faction service.
 
-- Server-side validation
-- Configurable capacity limits
-- Faction restrictions
-- Replicated squad information
+### Role abilities
 
-The architecture can later support squad leaders, rally points, orders and command systems.
+Medic and Support interactions have their own server-side validation.
 
-### Medic system
+Checks include:
 
-The Medic role includes a server-authoritative allied healing workflow.
+- player class;
+- faction;
+- target;
+- interaction distance;
+- cooldown;
+- target state.
 
-Validation includes:
+The client cannot directly apply health or gameplay changes.
 
-- Correct class
-- Valid target
-- Same faction
-- Maximum interaction distance
-- Target availability
-- Ability cooldown
-
-Health values are modified only by the server.
-
-### Support system
-
-The Support role includes the foundation for an ammunition resupply system.
-
-Validation includes:
-
-- Correct class
-- Allied target
-- Interaction distance
-- Target availability
-- Cooldown protection
-
-The final ammunition implementation is intentionally separated from the core gameplay because it depends on the weapon and asset system used by the production project.
-
-### Match system
-
-The match layer manages:
-
-- Match state
-- Team tickets
-- Team score
-- Match timer
-- Victory conditions
-- Player deaths
-- Objective progression
-
-This keeps match rules independent from networking, player lifecycle and individual gameplay systems.
-
-### Player statistics
-
-Match-local player statistics include:
-
-- Kills
-- Deaths
-- Faction
-- Class
-- Squad
-
-The structure can later be connected to a persistent statistics system.
-
-### HUD
-
-The client HUD displays replicated battlefield information such as:
-
-- Faction
-- Class
-- Squad
-- Tickets
-- Score
-- Active objective
-- Capture progress
-- Match information
-
-The client displays authoritative state received from the server rather than calculating important gameplay values locally.
-
-## Networking & security
-
-Competitive and RP-critical state is controlled by the server.
-
-Remote requests are treated as requests rather than trusted commands.
-
-The networking layer includes:
-
-- Server-side input validation
-- Remote event allow-listing
-- Per-player action rate limiting
-- Class validation
-- Faction validation
-- Squad validation
-- Distance validation
-- Cooldown validation
-- Authoritative health changes
-- Authoritative objective state
-- Authoritative ticket and score state
-
-Reliable networking is used for explicit gameplay actions and notices, while frequently refreshed state can use unreliable delivery when newer state supersedes older snapshots.
+---
 
 ## Architecture
 
-The project separates responsibilities into dedicated modules.
+The project is separated by responsibility rather than keeping the entire game mode in a single script.
 
 ```text
-aven-wwii-frontline/
-├── Client/
-│   ├── HUD.lua
-│   ├── Index.lua
-│   ├── InputController.lua
-│   ├── Network.lua
-│   └── State.lua
-│
-├── Server/
-│   ├── ClassService.lua
-│   ├── Config.lua
-│   ├── FactionService.lua
-│   ├── Index.lua
-│   ├── Logger.lua
-│   ├── MatchService.lua
-│   ├── NetworkService.lua
-│   ├── ObjectiveService.lua
-│   ├── PlayerService.lua
-│   ├── RateLimiter.lua
-│   ├── RoleAbilityService.lua
-│   ├── SquadService.lua
-│   └── WeaponService.lua
-│
-├── Shared/
-│   ├── Constants.lua
-│   ├── Index.lua
-│   └── Util.lua
-│
-├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── CASE-STUDY.md
-│   ├── FEATURE-MATRIX.md
-│   ├── INTERVIEW.md
-│   ├── REVIEW.md
-│   ├── ROADMAP.md
-│   ├── SECURITY.md
-│   ├── SHOWCASE.md
-│   ├── STATIC-AUDIT.md
-│   └── TESTING.md
-│
-├── CONTRIBUTING.md
-├── LICENSE
-├── Package.toml
-└── README.md
-## Design principles
+Client/
+    HUD.lua
+    Index.lua
+    InputController.lua
+    Network.lua
+    State.lua
 
-The implementation follows several core principles:
+Server/
+    ClassService.lua
+    Config.lua
+    FactionService.lua
+    Index.lua
+    Logger.lua
+    MatchService.lua
+    NetworkService.lua
+    ObjectiveService.lua
+    PlayerService.lua
+    RateLimiter.lua
+    RoleAbilityService.lua
+    SquadService.lua
+    WeaponService.lua
 
-### Server authority
+Shared/
+    Constants.lua
+    Index.lua
+    Util.lua
 
-Important gameplay state is owned and modified by the server.
+docs/
+    ARCHITECTURE.md
+    CASE-STUDY.md
+    FEATURE-MATRIX.md
+    INTERVIEW.md
+    REVIEW.md
+    ROADMAP.md
+    SECURITY.md
+    SHOWCASE.md
+    STATIC-AUDIT.md
+    TESTING.md
+```
 
-### Separation of responsibilities
+### Server
 
-Networking, factions, classes, objectives, players, squads, weapons and match rules are separated into dedicated services.
+The server owns the authoritative gameplay state.
 
-### Configuration-driven gameplay
+Services are kept independent where possible. For example, `ObjectiveService` manages capture logic while `MatchService` manages the overall round state.
 
-Balance values, spawn locations, objectives and gameplay parameters are centralized so they can be adjusted without rewriting the core systems.
+### Client
 
-### Defensive networking
+The client is responsible for input and presentation.
 
-Client input is validated before it can affect authoritative game state.
+It receives replicated match information from the server and uses that state to update the HUD.
 
-### Extensibility
+### Shared
 
-The architecture is designed to support additional Military RP systems without requiring a complete rewrite.
+Shared modules contain constants and utilities required by both environments.
 
-## Production integration
+---
 
-The repository intentionally does not bundle proprietary map or WWII asset packs.
+## Networking
 
-A production project can integrate its own:
+Remote events are handled through a dedicated networking layer.
 
-- WWII weapon models
-- Character models
-- Uniforms
-- Maps
-- Vehicles
-- Sounds
-- Animations
-- UI assets
+Requests coming from clients are validated before reaching authoritative gameplay systems.
 
-These elements can be connected to the existing gameplay services through configuration and dedicated adapters.
+The current implementation includes:
 
-## Planned extensions
+- remote event allow-listing;
+- per-player rate limiting;
+- faction validation;
+- class validation;
+- squad validation;
+- distance checks;
+- cooldown checks;
+- server-owned health changes;
+- server-owned objective state;
+- server-owned tickets and scoring.
 
-The architecture is prepared for additional systems such as:
+Reliable events are used for explicit actions and important notifications. State that is refreshed frequently can use unreliable delivery when an older packet is no longer useful.
 
-- Squad leaders
-- Rally points
-- Downed state
-- Medic revive system
-- Role limits
-- Command hierarchy
-- Radio channels
-- Command radio
-- Tactical deployment screen
-- Tactical map
-- Vehicle crews
-- Logistics
-- Deployable supplies
-- Persistent statistics
-- Administration tools
-- Moderation logs
-- Persistent player progression
+More details are available in [`docs/SECURITY.md`](docs/SECURITY.md).
+
+---
+
+## Configuration
+
+Gameplay values are centralized in the server configuration.
+
+This includes values such as:
+
+- faction spawns;
+- objective positions;
+- capture settings;
+- starting tickets;
+- respawn delay;
+- match duration;
+- class settings;
+- loadouts;
+- squad limits.
+
+This keeps balancing changes separate from the implementation of the individual services.
+
+---
+
+## Assets
+
+The repository focuses on gameplay code and does not include a custom WWII map or proprietary asset pack.
+
+Final projects can provide their own:
+
+- maps;
+- weapons;
+- uniforms;
+- characters;
+- vehicles;
+- animations;
+- sounds;
+- interface assets.
+
+The gameplay layer is designed so these can be integrated without replacing the match architecture.
+
+---
 
 ## Documentation
 
-Additional technical documentation is available in the `docs/` directory.
+Technical notes are kept in the [`docs`](docs/) directory.
 
-- `ARCHITECTURE.md` — architecture and service responsibilities
-- `CASE-STUDY.md` — implementation and design decisions
-- `FEATURE-MATRIX.md` — implemented and planned systems
-- `SECURITY.md` — networking and trust model
-- `TESTING.md` — multiplayer validation checklist
-- `ROADMAP.md` — possible future development
-- `REVIEW.md` — technical review scope
-- `SHOWCASE.md` — portfolio presentation
-- `INTERVIEW.md` — technical discussion points
-- `STATIC-AUDIT.md` — static repository review
+| Document | Purpose |
+| --- | --- |
+| [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Project architecture and service responsibilities |
+| [`SECURITY.md`](docs/SECURITY.md) | Networking and server-authority model |
+| [`FEATURE-MATRIX.md`](docs/FEATURE-MATRIX.md) | Current and planned functionality |
+| [`CASE-STUDY.md`](docs/CASE-STUDY.md) | Implementation decisions |
+| [`TESTING.md`](docs/TESTING.md) | Multiplayer validation checklist |
+| [`ROADMAP.md`](docs/ROADMAP.md) | Possible future development |
+
+Additional review and showcase notes are also available in the same directory.
+
+---
+
+## Status
+
+WWII Frontline is currently a technical portfolio prototype.
+
+The core architecture and gameplay systems are implemented as a foundation for further integration with a complete nanos world project. Final balancing, project-specific assets and multiplayer validation depend on the environment in which the framework is integrated.
+
+---
 
 ## Author
 
 **Aven**
 
-Discord Bot Developer · Web Developer · Gameplay Systems Developer
-
-This repository is presented as a technical portfolio project demonstrating modular gameplay architecture and server-authoritative systems for nanos world.
+Gameplay systems, Discord applications and web development.
